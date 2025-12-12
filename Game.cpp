@@ -28,7 +28,7 @@ void Game::tryOpenSafe() {
     cin >> inputPassword;
 
     if (inputPassword == "1024") {
-        cout << "\n>> 띠리릭-! [만능 열쇠] 획득!" << endl;
+        cout << "\n>> [만능 열쇠] 획득!" << endl;
         state.hasMasterKey = true;
         state.isSafeOpen = true;
     } else {
