@@ -1,43 +1,49 @@
-#pragma once // í—¤ë” íŒŒì¼ ì¤‘ë³µ í¬í•¨ ë°©ì§€
-#include <vector>
+// Game.h
+#ifndef GAME_H
+#define GAME_H
+
 #include <string>
+#include <vector>
 
-using namespace std;
-
-// ê²Œì„ ìƒíƒœ êµ¬ì¡°ì²´
+// 1. °ÔÀÓ »óÅÂ (Inventory & Flags)
 struct GameState {
-    bool hasFlashlight = false;
-    bool hasOldKey = false;
-    bool hasMasterKey = false;
-    bool hasMemo = false;
-    bool triedDoor = false;
-    bool isSafeOpen = false;
+    bool hasFlashlight = false; // ºñ»ó¿ë ¼ÕÀüµî
+    bool hasOldKey = false;     // ³°Àº ¿­¼è (Ä§´ë ¹Ø)
+    bool hasMasterKey = false;  // ¸¸´É ¿­¼è (±İ°í)
+    bool hasMemo = false;       // ÂÊÁö (Ã¥»ó À§)
+    bool triedDoor = false;     // ¹æ¹® ½Ãµµ ¿©ºÎ
+    bool isSafeOpen = false;    // ±İ°í ¿­¸² ¿©ºÎ
 };
 
-// ì´ë²¤íŠ¸ íƒ€ì…
+// 2. ÀÌº¥Æ® Á¤ÀÇ
 enum EventType {
-    CHECK_DRAWER, CHECK_BED, CHECK_DESK, TRY_DOOR, CHECK_BESIDE_DOOR
+    CHECK_DRAWER,       // 1. ¼­¶ø
+    CHECK_BED,          // 2. Ä§´ë
+    CHECK_DESK,         // 3. Ã¥»ó
+    TRY_DOOR,           // 4. ¹æ¹®
+    CHECK_BESIDE_DOOR   // 4-2. ¹® ¿· (È÷µç)
 };
 
-// ì„ íƒì§€ êµ¬ì¡°ì²´
+// ¼±ÅÃÁö ±¸Á¶Ã¼
 struct Option {
-    string text;
+    std::string text;
     EventType type;
 };
 
-// Game í´ë˜ìŠ¤ (ì—”ì§„ ì—­í• )
-class Game {
+// °ÔÀÓ ·ÎÁ÷À» ´ã´ãÇÏ´Â Å¬·¡½º
+class RoomEscapeGame {
 private:
-    GameState state;
-    bool escaped;
+    GameState state; // ÇöÀç °ÔÀÓ »óÅÂ
+    bool escaped;    // Å»Ãâ ¼º°ø ¿©ºÎ
 
-public:
-    Game(); // ìƒì„±ì (ì´ˆê¸°í™”)
-    void Run(); // ê²Œì„ ì‹¤í–‰ í•¨ìˆ˜
-
-private:
-    // ë‚´ë¶€ì ìœ¼ë¡œ ì“°ì´ëŠ” ë„ìš°ë¯¸ í•¨ìˆ˜ë“¤
-    vector<Option> getOptions();
+    // ³»ºÎ ·ÎÁ÷ ÇÔ¼öµé
+    std::vector<Option> getOptions() const;
     void tryOpenSafe();
     void processEvent(EventType event);
+
+public:
+    RoomEscapeGame(); 
+    void run();       // °ÔÀÓ ½ÇÇà ÇÔ¼ö
 };
+
+#endif // GAME_H

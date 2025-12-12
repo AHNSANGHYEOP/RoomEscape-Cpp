@@ -1,7 +1,10 @@
+// main.cpp
 #include "Game.h"
 
 int main() {
-    Game game; // 瓴岇瀯 臧濎泊 靸濎劚
-    game.Run(); // 瓴岇瀯 鞁ろ枆
+    // 霸烙 按眉 积己 棺 角青
+    RoomEscapeGame game;
+    game.run();
+
     return 0;
 }

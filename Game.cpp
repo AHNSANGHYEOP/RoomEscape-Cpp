@@ -1,75 +1,152 @@
+// Game.cpp
 #include "Game.h"
 #include <iostream>
 #include <limits>
 
-Game::Game() : escaped(false) {}
+using namespace std;
 
-vector<Option> Game::getOptions() {
+// »ý¼ºÀÚ: °ÔÀÓ ÃÊ±âÈ­
+RoomEscapeGame::RoomEscapeGame() {
+    escaped = false;
+    // GameStateÀÇ ¸â¹öµéÀº ±¸Á¶Ã¼ Á¤ÀÇ ½Ã false·Î ÃÊ±âÈ­µÊ
+}
+
+// ÇöÀç »óÅÂ¿¡ µû¸¥ ¼±ÅÃÁö ¹ÝÈ¯
+vector<Option> RoomEscapeGame::getOptions() const {
     vector<Option> options;
-    options.push_back({"ì„œëžì„ ì—´ì–´ë³¸ë‹¤.", CHECK_DRAWER});
-    options.push_back({"ì¹¨ëŒ€ ë°‘ì„ ì‚´íŽ´ë³¸ë‹¤.", CHECK_BED});
-    options.push_back({"ì±…ìƒ ìœ„ë¥¼ ì‚´íŽ´ë³¸ë‹¤.", CHECK_DESK});
-    options.push_back({"ë°©ë¬¸ì„ ì—´ì–´ë³¸ë‹¤.", TRY_DOOR});
+    options.push_back({"¼­¶øÀ» ¿­¾îº»´Ù.", CHECK_DRAWER});
+    options.push_back({"Ä§´ë ¹ØÀ» »ìÆìº»´Ù.", CHECK_BED});
+    options.push_back({"Ã¥»ó À§¸¦ »ìÆìº»´Ù.", CHECK_DESK});
+    options.push_back({"¹æ¹®À» ¿­¾îº»´Ù.", TRY_DOOR});
 
+    // È÷µç ¼±ÅÃÁö: ¹®À» ÇÑ¹ø ½ÃµµÇß°í, ¼ÕÀüµîÀÌ ¾øÀ» ¶§ µîÀå
     if (state.triedDoor && !state.hasFlashlight) {
-        options.push_back({"ë¬¸ ì˜†ì„ ìžì„¸ížˆ ì‚´íŽ´ë³¸ë‹¤.", CHECK_BESIDE_DOOR});
+        options.push_back({"¹® ¿·À» ÀÚ¼¼È÷ »ìÆìº»´Ù.", CHECK_BESIDE_DOOR});
     }
     return options;
 }
 
-// ê¸ˆê³  ë¡œì§
-void Game::tryOpenSafe() {
+// ±Ý°í ÆÛÁñ ·ÎÁ÷
+void RoomEscapeGame::tryOpenSafe() {
     if (state.isSafeOpen) {
-        cout << "\n>> ì´ë¯¸ ê¸ˆê³ ë¥¼ ì—´ì–´ ì•„ì´í…œì„ ì±™ê²¼ìŠµë‹ˆë‹¤." << endl;
+        cout << "\n>> ÀÌ¹Ì ±Ý°í¸¦ ¿­¾î ¾ÆÀÌÅÛÀ» Ã¬°å½À´Ï´Ù." << endl;
         return;
     }
+
     string inputPassword;
-    cout << "\n[ ê¸ˆê³  ìž ê¸ˆ ìž¥ì¹˜ ]\n>> 4ìžë¦¬ ë¹„ë°€ë²ˆí˜¸: ";
+    cout << "\n[ ±Ý°í Àá±Ý ÀåÄ¡ ]" << endl;
+    cout << ">> 4ÀÚ¸® ºñ¹Ð¹øÈ£¸¦ ÀÔ·ÂÇÏ¼¼¿ä: ";
     cin >> inputPassword;
 
+    // Á¤´ä: 2ÀÇ 10½Â = 1024
     if (inputPassword == "1024") {
-        cout << "\n>> [ë§ŒëŠ¥ ì—´ì‡ ] íšë“!" << endl;
+        cout << "\n>> ±Ý°í°¡ ¿­·È½À´Ï´Ù." << endl;
+        cout << ">> ¾È¿¡¼­ [¸¸´É ¿­¼è]¸¦ ¹ß°ßÇß½À´Ï´Ù!" << endl;
         state.hasMasterKey = true;
         state.isSafeOpen = true;
     } else {
-        cout << "\n>> ë¹„ë°€ë²ˆí˜¸ê°€ í‹€ë ¸ìŠµë‹ˆë‹¤." << endl;
+        cout << "\n>> ºñ¹Ð¹øÈ£°¡ Æ²·È½À´Ï´Ù." << endl;
+        cout << ">> (ÂÊÁöÀÇ ³»¿ëÀ» ´Ù½Ã »ý°¢ÇØºÁ¾ß ÇÒ °Í °°´Ù...)" << endl;
     }
 }
 
-// ì´ë²¤íŠ¸ ì²˜ë¦¬ ë¡œì§
-void Game::processEvent(EventType event) {
+// ÀÌº¥Æ® Ã³¸® ·ÎÁ÷
+void RoomEscapeGame::processEvent(EventType event) {
     switch (event) {
-        case CHECK_DRAWER:
-            if (!state.hasOldKey) cout << "\n>> ì„œëžì´ ìž ê²¨ìžˆìŠµë‹ˆë‹¤." << endl;
-            else {
-                cout << "\n>> ì„œëžì„ ì—´ì–´ [ì†Œí˜• ê¸ˆê³ ]ë¥¼ ë°œê²¬í–ˆìŠµë‹ˆë‹¤." << endl;
-                tryOpenSafe();
+    // 1. ¼­¶ø (±Ý°í)
+    case CHECK_DRAWER:
+        if (!state.hasOldKey) {
+            cout << "\n>> ¼­¶øÀÌ Àá°ÜÀÖ½À´Ï´Ù. ³°Àº ¿­¼è ±¸¸ÛÀÌ º¸ÀÔ´Ï´Ù." << endl;
+        } else {
+            cout << "\n>> ³°Àº ¿­¼è¸¦ »ç¿ëÇØ ¼­¶øÀ» ¿­¾ú½À´Ï´Ù." << endl;
+            cout << ">> ¼­¶ø ¾È¿¡ [¼ÒÇü ±Ý°í]°¡ ÀÖ½À´Ï´Ù!" << endl;
+            tryOpenSafe();
+        }
+        break;
+
+    // 2. Ä§´ë (³°Àº ¿­¼è)
+    case CHECK_BED:
+        if (!state.hasFlashlight) {
+            cout << "\n>> ³Ê¹« ¾îµÎ¿ö¼­ Ä§´ë ¹ØÀÌ º¸ÀÌÁö ¾Ê½À´Ï´Ù." << endl;
+        } else {
+            if (state.hasOldKey) {
+                cout << "\n>> ¸ÕÁö±¸µ¢ÀÌ »ÓÀÔ´Ï´Ù." << endl;
+            } else {
+                cout << "\n>> ¼ÕÀüµîÀ» ºñÃßÀÚ ±¸¼®¿¡¼­ [³°Àº ¿­¼è]¸¦ ¹ß°ßÇß½À´Ï´Ù!" << endl;
+                state.hasOldKey = true;
             }
-            break;
-        case CHECK_BED:
-             // (ì´ì „ ì½”ë“œì˜ ì¹¨ëŒ€ ë¡œì§ ë³µì‚¬)
-             if(!state.hasFlashlight) cout << "\n>> ë„ˆë¬´ ì–´ë‘ì›Œì„œ ì•ˆ ë³´ìž…ë‹ˆë‹¤." << endl;
-             else { /* ... */ } 
-             break;
-        // ... ë‚˜ë¨¸ì§€ caseë“¤ (ì±…ìƒ, ë¬¸ ë“±) ì—¬ê¸°ì— ë³µì‚¬ ...
-        // ì§€ë©´ ê´€ê³„ìƒ ìƒëžµí–ˆì§€ë§Œ, ì•„ê¹Œ ìž‘ì„±í•œ ë¡œì§ ê·¸ëŒ€ë¡œ ë„£ìœ¼ì‹œë©´ ë©ë‹ˆë‹¤!
-        case TRY_DOOR:
-            if (state.hasMasterKey) escaped = true;
-            else {
-                cout << "\n>> ë¬¸ì€ ìž ê²¨ìžˆìŠµë‹ˆë‹¤." << endl;
-                if (!state.triedDoor) state.triedDoor = true;
+        }
+        break;
+
+    // 3. Ã¥»ó (ÂÊÁö & ÈùÆ®)
+    case CHECK_DESK:
+        if (!state.hasFlashlight) {
+            cout << "\n>> ³Ê¹« ¾îµÎ¿ö¼­ Ã¥»ó À§¸¦ È®ÀÎÇÒ ¼ö ¾ø½À´Ï´Ù." << endl;
+        } else {
+            if (!state.hasMemo) {
+                cout << "\n>> Ã¥»ó À§¿¡¼­ ²¿±ê²¿±êÇÑ [ÂÊÁö]¸¦ ¹ß°ßÇß½À´Ï´Ù." << endl;
+                state.hasMemo = true;
             }
-            break;
+            
+            cout << "\n=========== [ ÂÊ Áö ] ===========" << endl;
+            cout << " ºñ¹Ð¹øÈ£ ÈùÆ®:" << endl << endl;
+            cout << "   S2   S2   S2   S2   S2   " << endl;
+            cout << "=================================" << endl;
+            cout << ">> (ÇÏÆ® 5°³°¡ ±×·ÁÁ® ÀÖ´Ù...)" << endl;
+        }
+        break;
+
+    // 4. ¹æ¹® (Å»Ãâ)
+    case TRY_DOOR:
+        if (state.hasMasterKey) {
+            cout << "\n>> ¸¸´É ¿­¼è·Î ¹®À» ¿­¾ú½À´Ï´Ù. Å»Ãâ ¼º°ø!" << endl;
+            escaped = true;
+        } else {
+            cout << "\n>> ¹®Àº Àá°ÜÀÖ½À´Ï´Ù." << endl;
+            if (!state.triedDoor) {
+                cout << ">> (ÁÖº¯À» Á» ´õ ÀÚ¼¼È÷ »ìÆìºÁ¾ß ÇÒ °Í °°´Ù...)" << endl;
+                state.triedDoor = true;
+            }
+        }
+        break;
+
+    // 4-2. ¹® ¿· (¼ÕÀüµî)
+    case CHECK_BESIDE_DOOR:
+        cout << "\n>> ¹® ¿· º®¿¡ ºÙ¾îÀÖ´Â ºñ»ó¿ë º¸°üÇÔ¿¡¼­ [ºñ»ó¿ë ¼ÕÀüµî]À» È¹µæÇß½À´Ï´Ù!" << endl;
+        state.hasFlashlight = true;
+        break;
     }
 }
 
-// ê²Œìž„ ì‹¤í–‰
-void Game::Run() {
-    cout << "=== ë°©íƒˆì¶œ ê²Œìž„ ì‹œìž‘ ===" << endl;
+// °ÔÀÓ ¸ÞÀÎ ·çÇÁ
+void RoomEscapeGame::run() {
+    cout << "=== ¹æÅ»Ãâ °ÔÀÓ ===" << endl;
+    cout << "¾îµÎ¿î ¹æ¿¡ °¤ÇôÀÖ½À´Ï´Ù. Å»Ãâ ¹æ¹ýÀ» Ã£¾Æ¾ß ÇÕ´Ï´Ù." << endl;
+
     while (!escaped) {
-        vector<Option> options = getOptions();
-        // ... ë©”ë‰´ ì¶œë ¥ ë° ìž…ë ¥ ë°›ê¸° ì½”ë“œ ...
-        // ... processEvent(options[choice-1].type); í˜¸ì¶œ ...
+        vector<Option> currentOptions = getOptions();
+
+        cout << "\n----------------------------------------" << endl;
+        cout << "¹«¾ùÀ» ÇÏ½Ã°Ú½À´Ï±î?" << endl;
+        for (size_t i = 0; i < currentOptions.size(); ++i) {
+            cout << (i + 1) << ". " << currentOptions[i].text << endl;
+        }
+        cout << "----------------------------------------" << endl;
+
+        int choice;
+        cout << ">> ¼±ÅÃ: ";
+        if (!(cin >> choice)) {
+            cout << "¼ýÀÚ¸¦ ÀÔ·ÂÇØÁÖ¼¼¿ä." << endl;
+            cin.clear(); 
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            continue;
+        }
+
+        if (choice < 1 || choice > static_cast<int>(currentOptions.size())) {
+            cout << "Àß¸øµÈ ¼±ÅÃÀÔ´Ï´Ù." << endl;
+            continue;
+        }
+
+        processEvent(currentOptions[choice - 1].type);
     }
-    cout << "=== íƒˆì¶œ ì„±ê³µ! ===" << endl;
 }
