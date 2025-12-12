@@ -1,0 +1,14 @@
+# 실행 파일 무시
+*.exe
+*.dll
+*.o
+*.obj
+
+# 디버그 관련 파일 무시
+*.pdb
+*.ilk
+*.idb
+Debug/
+Release/
+x64/
+.vscode/
